@@ -40,42 +40,58 @@ def solution_C5():
         next(reader)
         step = 0
         for row in reader:
-        temps.append(  # YOUR CODE HERE)
-        time_step.append(  # YOUR CODE HERE)
-        step=step + 1
+            temps.append(float(row[1]))
+            time_step.append(row[0])
+            step = step + 1
 
-            series =  # YOUR CODE HERE
+    series = np.array(temps)
 
-            # Normalization Function. DO NOT CHANGE THIS CODE
-            min = np.min(series)
-            max = np.max(series)
-            series -= min
-            series /= max
-            time = np.array(time_step)
+    # Normalization Function. DO NOT CHANGE THIS CODE
+    min = np.min(series)
+    max = np.max(series)
+    series -= min
+    series /= max
+    time = np.array(time_step)
 
-            # DO NOT CHANGE THIS CODE
-            split_time = 2500
+    # DO NOT CHANGE THIS CODE
+    split_time = 2500
 
-            time_train =  # YOUR CODE HERE
-            x_train =  # YOUR CODE HERE
-            time_valid =  # YOUR CODE HERE
-            x_valid =  # YOUR CODE HERE
+    time_train = time[:split_time]
+    x_train = series[:split_time]
+    time_valid = time[split_time:]
+    x_valid = series[split_time:]
 
-            # DO NOT CHANGE THIS CODE
-            window_size = 64
-            batch_size = 256
-            shuffle_buffer_size = 1000
+    # DO NOT CHANGE THIS CODE
+    window_size = 64
+    batch_size = 256
+    shuffle_buffer_size = 1000
 
-            train_set = windowed_dataset(x_train, window_size, batch_size, shuffle_buffer_size)
-            print(train_set)
-            print(x_train.shape)
+    train_set = windowed_dataset(x_train, window_size, batch_size, shuffle_buffer_size)
+    print(train_set)
+    print(x_train.shape)
 
-            model = tf.keras.models.Sequential([
-                # YOUR CODE HERE.
-                tf.keras.layers.Dense(1),
-            ])
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv1D(filters=32, kernel_size=5,
+                               strides=1, padding="causal",
+                               activation="relu",
+                               input_shape=[None, 1]),
+        tf.keras.layers.LSTM(64, return_sequences=True),
+        tf.keras.layers.LSTM(64, return_sequences=True),
+        tf.keras.layers.Dense(30, activation="relu"),
+        tf.keras.layers.Dense(10, activation="relu"),
+        tf.keras.layers.Dense(1)
+    ])
 
-            # YOUR CODE HERE
+    lr_schedule = tf.keras.callbacks.LearningRateScheduler(
+        lambda epoch: 1e-6 * 10 ** (epoch / 20))
+
+    optimizer = tf.keras.optimizers.SGD(learning_rate=1e-6, momentum=0.9)
+
+    model.compile(loss=tf.keras.losses.Huber(),
+                  optimizer=optimizer,
+                  metrics=["mae"])
+    model.fit(train_set, epochs=100, callbacks=[lr_schedule])
+
     return model
 
 

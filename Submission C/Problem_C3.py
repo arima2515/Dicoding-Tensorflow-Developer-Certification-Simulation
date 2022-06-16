@@ -28,19 +28,57 @@ def solution_C3():
     zip_ref.extractall('data/')
     zip_ref.close()
 
-    BASE_DIR = 'data/cats_and_dogs'
+    BASE_DIR = '/content/data/cats_and_dogs_filtered'
     train_dir = os.path.join(BASE_DIR, 'train')
     validation_dir = os.path.join(BASE_DIR, 'validation')
 
-    train_datagen =  # YOUR CODE HERE
+    train_datagen = ImageDataGenerator(
+        rescale=1. / 255.,
+        rotation_range=40,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True
+    )
 
-    train_generator =  # YOUR CODE HERE
+    val_datagen = ImageDataGenerator(
+        rescale=1. / 255.
+    )
 
+    train_generator = train_datagen.flow_from_directory(
+        train_dir,
+        target_size=(150, 150),
+        class_mode='binary',
+        batch_size=128
+    )
+
+    val_generator = val_datagen.flow_from_directory(
+        validation_dir,
+        target_size=(150, 150),
+        class_mode='binary'
+    )
     model = tf.keras.models.Sequential([
-        # YOUR CODE HERE, end with a Neuron Dense, activated by 'sigmoid'
+        tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(150, 150, 3)),
+        tf.keras.layers.MaxPooling2D(2, 2),
+        tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+        tf.keras.layers.MaxPooling2D(2, 2),
+        tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
+        tf.keras.layers.MaxPooling2D(2, 2),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(128, activation='relu'),
         tf.keras.layers.Dense(1, activation='sigmoid')
     ])
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.fit(
+        train_generator,
+        epochs=30,
+        verbose=1,
+        validation_data=val_generator,
+        validation_batch_size=32
+    )
 
+    return model
     return model
 
 
